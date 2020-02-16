@@ -29,13 +29,40 @@ class View: UIView {
         return shapeLayer
     }()
     
+    private var sign: CGFloat = -1
+    private var widthFactor: CGFloat = 1 {
+        didSet {
+            if widthFactor < 0 {
+                widthFactor = 0
+                sign *= -1
+            }
+            if widthFactor > 1 {
+                widthFactor = 1
+                sign *= -1
+            }
+        }
+    }
+    
+    @objc private func update() {
+        widthFactor += 0.01 * sign
+        setNeedsLayout()
+    }
+    
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        
+        CADisplayLink(target: self, selector: #selector(update)).add(to: .main, forMode: .common)
+    }
+    
     override func layoutSubviews() {
         super.layoutSubviews()
         gradientLayer.frame = bounds
         
         maskLayer.frame = bounds
         let path = UIBezierPath(rect: bounds)
-        path.append(UIBezierPath(ovalIn: bounds))
+        
+        let width = bounds.width * widthFactor
+        path.append(UIBezierPath(ovalIn: CGRect(x: (bounds.width - width) / 2, y: 0, width: width, height: bounds.height)))
         
         let attrStr = NSAttributedString(string: "Hello", attributes: [
             .font: UIFont.systemFont(ofSize: 80),
